@@ -6,16 +6,18 @@ import { createPost, updatePost } from '../../actions/posts';
 
 import useStyles from './styles'
 
+const emptyPost = {
+    title: '', 
+    message: '', 
+    tags: '', 
+    selectedFile: ''
+}
+
 const Form = ({ currentID, setCurrentID }) => {
-    const [postData, setPostData] = useState({
-        creator: '', 
-        title: '', 
-        message: '', 
-        tags: '', 
-        selectedFile: ''
-    })
+    const [postData, setPostData] = useState(emptyPost)
     const post = useSelector((state) => currentID ? state.posts.find((p) => p._id === currentID): null);
     const classes = useStyles();
+    const user = JSON.parse(localStorage.getItem('profile'));
     const dispatch = useDispatch();
 
     useEffect(() => {
@@ -23,39 +25,36 @@ const Form = ({ currentID, setCurrentID }) => {
             setPostData(post);
     }, [post])
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+
         if(currentID) {
-            dispatch(updatePost(currentID, postData));
+            dispatch(updatePost(currentID, { ...postData, name: user?.result?.name }));
         } else{
-            dispatch(createPost(postData));
+            dispatch(createPost({ ...postData, name: user?.result?.name }));
         }
         clear();
     }
 
     const clear = () => {
         setCurrentID(null);
-        setPostData({
-            creator: '', 
-            title: '', 
-            message: '', 
-            tags: '', 
-            selectedFile: ''
-        });
+        setPostData(emptyPost);
+    }
+
+    if(!user?.result?.name){
+        return (
+            <Paper className={classes.paper}>
+                <Typography variant="h6" align="center">
+                    Please Sign In to create your own memories and like other's memories.
+                </Typography>
+            </Paper>
+        )
     }
 
     return (
         <Paper className={classes.paper}>
             <form autoComplete="off" noValidate className={`${classes.root} ${classes.form}`} onSubmit={handleSubmit}>
                 <Typography variant="h6">{currentID ? 'Editing' : 'Creating'} a Memory</Typography>
-                <TextField
-                    name="creator"
-                    variant="outlined"
-                    label="Creator"
-                    fullWidth
-                    value={postData.creator}
-                    onChange={(e) => setPostData({ ...postData, creator: e.target.value })}
-                />
                 <TextField
                     name="title"
                     variant="outlined"
